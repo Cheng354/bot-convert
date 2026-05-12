@@ -19,8 +19,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
         self.wfile.write(b"Bot is running!")
+
     def log_message(self, format, *args):
-        pass
+        pass  # Suppress request logs
 
 def run_server():
     server = HTTPServer(("0.0.0.0", 8080), Handler)
@@ -29,7 +30,9 @@ def run_server():
 threading.Thread(target=run_server, daemon=True).start()
 
 # ── Config ────────────────────────────────────────────────────────────────────
-TELEGRAM_TOKEN = "7210358510:AAHqRi1E5ezgJVCDCH3JwZ6_8SeH1Q-P6pY"
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+if not TELEGRAM_TOKEN:
+    raise RuntimeError("TELEGRAM_TOKEN environment variable is not set!")
 
 # ── Handlers ──────────────────────────────────────────────────────────────────
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -77,8 +80,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("⏳ កំពុងបំប្លែងរូបភាពទៅ PDF សូមរង់ចាំ...")
 
+    input_path = None
+    output_path = None
+
     try:
-        # Use system temp directory (works on both Windows and Linux)
         tmp_dir = tempfile.gettempdir()
 
         # Get the file
@@ -110,14 +115,16 @@ async def handle_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 caption="✅ បំប្លែងរួចរាល់! នេះជា PDF របស់អ្នក 🎉",
             )
 
-        # Cleanup
-        os.remove(input_path)
-        os.remove(output_path)
-
     except Exception as e:
         await update.message.reply_text(
             f"⚠️ មានបញ្ហាក្នុងការបំប្លែង។\nសូមព្យាយាមម្តងទៀត!\nError: {e}"
         )
+
+    finally:
+        # Always clean up temp files, even if an error occurred
+        for path in (input_path, output_path):
+            if path and os.path.exists(path):
+                os.remove(path)
 
 async def handle_other(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
