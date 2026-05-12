@@ -30,7 +30,7 @@ def run_server():
 threading.Thread(target=run_server, daemon=True).start()
 
 # ── Config ────────────────────────────────────────────────────────────────────
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+TELEGRAM_TOKEN = os.environ.get("7210358510:AAHqRi1E5ezgJVCDCH3JwZ6_8SeH1Q-P6pY")
 if not TELEGRAM_TOKEN:
     raise RuntimeError("TELEGRAM_TOKEN environment variable is not set!")
 
